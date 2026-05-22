@@ -119,6 +119,38 @@ Cuando se ejecuta `addVote`, el resolver incrementa el contador y publica `VOTE_
 
 ---
 
+## Despliegue (Vercel + Render)
+
+El **frontend** va en [Vercel](https://vercel.com); el **backend** en [Render](https://render.com) (u otro host con proceso persistente), porque las subscriptions usan WebSockets.
+
+### Backend (Render)
+
+1. **New Web Service** → conecta el repositorio.
+2. **Root Directory:** `graphql-voting/backend`
+3. **Build Command:** `npm install`
+4. **Start Command:** `npm start`
+5. Variables de entorno:
+   - `FRONTEND_ORIGIN` = URL de tu app en Vercel (ej. `https://graphql-voting.vercel.app`)
+   - Para incluir previews: `https://tu-app.vercel.app,https://tu-app-git-main-usuario.vercel.app`
+6. Copia la URL pública del servicio (ej. `https://graphql-voting-api.onrender.com`).
+
+### Frontend (Vercel)
+
+1. **Add New Project** → importa el repositorio.
+2. **Root Directory:** `graphql-voting/frontend`
+3. **Build Command:** `npm run build` · **Output Directory:** `dist`
+4. Variables de entorno (usa la URL del backend; `wss` para WebSocket):
+   - `VITE_GRAPHQL_HTTP` = `https://tu-backend.onrender.com/graphql`
+   - `VITE_GRAPHQL_WS` = `wss://tu-backend.onrender.com/graphql`
+5. Deploy. Si cambias el backend, redeploy el frontend.
+
+### Archivos de ejemplo
+
+- `graphql-voting/frontend/.env.example`
+- `graphql-voting/backend/.env.example`
+
+---
+
 ## Referencia de la API
 
 | Operación | Tipo | Descripción |

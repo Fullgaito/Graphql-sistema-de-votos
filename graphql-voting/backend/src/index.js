@@ -12,11 +12,42 @@ import { typeDefs, resolvers } from "./resolvers.js";
 const PORT = Number(process.env.PORT) || 4000;
 const corsOrigins = (process.env.FRONTEND_ORIGIN ?? "http://localhost:5173")
   .split(",")
-  .map((origin) => origin.trim());
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    if (corsOrigins.includes(origin)) {
+      callback(null, origin);
+      return;
+    }
+    console.warn(`CORS blocked origin: ${origin}`);
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "apollo-require-preflight",
+    "x-apollo-operation-name",
+  ],
+};
+
+function isAllowedOrigin(origin) {
+  return !origin || corsOrigins.includes(origin);
+}
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
 const app = express();
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 const httpServer = http.createServer(app);
 
 const wsServer = new WebSocketServer({
@@ -24,7 +55,19 @@ const wsServer = new WebSocketServer({
   path: "/graphql",
 });
 
-const serverCleanup = useServer({ schema }, wsServer);
+const serverCleanup = useServer(
+  {
+    schema,
+    onConnect: async (ctx) => {
+      const origin = ctx.extra.request.headers.origin;
+      if (!isAllowedOrigin(origin)) {
+        console.warn(`WebSocket blocked origin: ${origin}`);
+        return false;
+      }
+    },
+  },
+  wsServer
+);
 
 const server = new ApolloServer({
   schema,
@@ -44,12 +87,7 @@ const server = new ApolloServer({
 
 await server.start();
 
-app.use(
-  "/graphql",
-  cors({ origin: corsOrigins, credentials: true }),
-  express.json(),
-  expressMiddleware(server)
-);
+app.use("/graphql", express.json(), expressMiddleware(server));
 
 const shutdown = async (signal) => {
   console.log(`\n${signal} received. Shutting down gracefully...`);
@@ -65,6 +103,7 @@ process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
-  console.log(`🔌 Subscriptions ready at ws://localhost:${PORT}/graphql`);
+  console.log(`🚀 GraphQL HTTP ready on port ${PORT}/graphql`);
+  console.log(`🔌 Subscriptions ready on port ${PORT}/graphql (ws)`);
+  console.log(`🌐 CORS allowed origins: ${corsOrigins.join(", ")}`);
 });
