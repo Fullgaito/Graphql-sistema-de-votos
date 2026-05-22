@@ -2,8 +2,10 @@ import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
-const HTTP_URI = "http://localhost:4000/graphql";
-const WS_URI = "ws://localhost:4000/graphql";
+const HTTP_URI =
+  import.meta.env.VITE_GRAPHQL_HTTP ?? "http://localhost:4000/graphql";
+const WS_URI =
+  import.meta.env.VITE_GRAPHQL_WS ?? "ws://localhost:4000/graphql";
 
 let connectionState = false;
 const connectionListeners = new Set();
