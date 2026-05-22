@@ -9,8 +9,10 @@ import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/use/ws";
 import { typeDefs, resolvers } from "./resolvers.js";
 
-const PORT = 4000;
-const FRONTEND_ORIGIN = "http://localhost:5173";
+const PORT = Number(process.env.PORT) || 4000;
+const corsOrigins = (process.env.FRONTEND_ORIGIN ?? "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim());
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -44,7 +46,7 @@ await server.start();
 
 app.use(
   "/graphql",
-  cors({ origin: FRONTEND_ORIGIN, credentials: true }),
+  cors({ origin: corsOrigins, credentials: true }),
   express.json(),
   expressMiddleware(server)
 );
