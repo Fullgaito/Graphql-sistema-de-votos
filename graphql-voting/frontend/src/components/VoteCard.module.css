@@ -1,0 +1,71 @@
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  min-width: 200px;
+  flex: 1;
+  max-width: 280px;
+}
+
+.label {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.count {
+  margin: 0 0 1.5rem;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.pulse {
+  animation: countPulse 0.45s ease;
+}
+
+@keyframes countPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.15);
+    color: #2563eb;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.button {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

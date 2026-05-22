@@ -1,0 +1,17 @@
+type Vote {
+  id: ID!
+  label: String!
+  count: Int!
+}
+
+type Query {
+  getVotes: [Vote!]!
+}
+
+type Mutation {
+  addVote(id: ID!): Vote!
+}
+
+type Subscription {
+  voteUpdated: Vote!
+}
