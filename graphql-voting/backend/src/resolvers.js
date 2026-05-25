@@ -22,14 +22,19 @@ const resolvers = {
     getVotes: () => votes,
   },
   Mutation: {
-    addVote: async (_, { id }) => {
+    addVote: async (_, { id, voterName }) => {
       const vote = votes.find((v) => v.id === id);
       if (!vote) {
         throw new Error(`Vote option with id "${id}" not found`);
       }
       vote.count += 1;
       const updated = { ...vote };
-      await pubsub.publish(VOTE_UPDATED, { voteUpdated: updated });
+      const voteEvent = {
+        voterName,
+        optionLabel: vote.label,
+        vote: updated,
+      };
+      await pubsub.publish(VOTE_UPDATED, { voteUpdated: voteEvent });
       return updated;
     },
   },

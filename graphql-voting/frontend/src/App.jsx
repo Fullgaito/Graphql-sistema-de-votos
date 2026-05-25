@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
+import toast, { Toaster } from "react-hot-toast";
 import VoteCard from "./components/VoteCard.jsx";
 import ConnectionStatus from "./components/ConnectionStatus.jsx";
 import styles from "./App.module.css";
@@ -15,8 +16,8 @@ const GET_VOTES = gql`
 `;
 
 const ADD_VOTE = gql`
-  mutation AddVote($id: ID!) {
-    addVote(id: $id) {
+  mutation AddVote($id: ID!, $voterName: String!) {
+    addVote(id: $id, voterName: $voterName) {
       id
       label
       count
@@ -27,9 +28,13 @@ const ADD_VOTE = gql`
 const VOTE_UPDATED = gql`
   subscription VoteUpdated {
     voteUpdated {
-      id
-      label
-      count
+      voterName
+      optionLabel
+      vote {
+        id
+        label
+        count
+      }
     }
   }
 `;
@@ -38,8 +43,22 @@ export default function App() {
   const [votes, setVotes] = useState([]);
   const [pulseIds, setPulseIds] = useState(new Set());
   const [votingId, setVotingId] = useState(null);
+  const [userName, setUserName] = useState("");
 
   const { data, loading, error } = useQuery(GET_VOTES);
+
+  useEffect(() => {
+    if (!userName) {
+      let name = "";
+      while (!name.trim()) {
+        name = window.prompt("Por favor ingresa tu nombre para votar:", "") ?? "";
+        if (!name.trim()) {
+          window.alert("Debes ingresar tu nombre para continuar.");
+        }
+      }
+      setUserName(name.trim());
+    }
+  }, [userName]);
 
   useEffect(() => {
     if (data?.getVotes) {
@@ -62,13 +81,15 @@ export default function App() {
 
   useSubscription(VOTE_UPDATED, {
     onData: ({ data: subData }) => {
-      const updated = subData?.data?.voteUpdated;
-      if (!updated) return;
+      const event = subData?.data?.voteUpdated;
+      const updated = event?.vote;
+      if (!event || !updated) return;
 
       setVotes((prev) =>
         prev.map((v) => (v.id === updated.id ? { ...v, count: updated.count } : v))
       );
       triggerPulse(updated.id);
+      toast.success(`¡${event.voterName} ha votado por ${event.optionLabel}!`);
     },
   });
 
@@ -80,7 +101,7 @@ export default function App() {
   const handleVote = async (id) => {
     setVotingId(id);
     try {
-      const { data: result } = await addVote({ variables: { id } });
+      const { data: result } = await addVote({ variables: { id, voterName: userName } });
       const updated = result?.addVote;
       if (updated) {
         setVotes((prev) =>
@@ -110,12 +131,21 @@ export default function App() {
     );
   }
 
+  if (!userName) {
+    return (
+      <div className={styles.page}>
+        <p className={styles.loading}>Esperando tu nombre para continuar...</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>GraphQL Voting</h1>
         <ConnectionStatus />
       </header>
+      <Toaster position="top-right" />
 
       <p className={styles.total}>
         Total votes: <strong>{totalVotes}</strong>

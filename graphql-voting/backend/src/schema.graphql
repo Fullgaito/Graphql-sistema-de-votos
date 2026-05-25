@@ -4,14 +4,20 @@ type Vote {
   count: Int!
 }
 
+type VoteEvent {
+  voterName: String!
+  optionLabel: String!
+  vote: Vote!
+}
+
 type Query {
   getVotes: [Vote!]!
 }
 
 type Mutation {
-  addVote(id: ID!): Vote!
+  addVote(id: ID!, voterName: String!): Vote!
 }
 
 type Subscription {
-  voteUpdated: Vote!
+  voteUpdated: VoteEvent!
 }
